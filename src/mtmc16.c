@@ -66,16 +66,17 @@ static const char _asm_help_page[] =
 
 
 static const char _disasm_usage[] =
-    "usage: mtmc16 disasm [-h] [-b] [-o OUT] FILE\n";
+    "usage: mtmc16 disasm [-h] [-b] [-g] [-o OUT] FILE\n";
 
 static const char _disasm_help_page[] =
-    "usage: mtmc16 disasm [-h] [-b] [-o OUT] FILE\n"
+    "usage: mtmc16 disasm [-h] [-b] [-g] [-o OUT] FILE\n"
     "\n"
     "positional arguments:\n"
     "  FILE                  binary file\n"
     "\n"
     "options:\n"
     "  -b, --bytes           print code bytes\n"
+    "  -g, --graphics        extract graphics\n"
     "  -h, --help            show this help\n"
     "  -o, --output OUT      output filename\n"
     ;
@@ -117,6 +118,7 @@ struct AppArgs {
     int asm_needs_help;
     int disasm_needs_help;
     int disasm_code_bytes;
+    int disasm_graphics;
     int img_needs_help;
     const char* input;
     const char* input_arg;
@@ -284,6 +286,10 @@ parse_args(int argc, const char* argv[], struct AppArgs* args) {
                 else if (strcmp(argv[i], "-b") == 0 ||
                     strcmp(argv[i], "--bytes") == 0) {
                     args->disasm_code_bytes = 1;
+                }
+                else if (strcmp(argv[i], "-g") == 0 ||
+                    strcmp(argv[i], "--graphics") == 0) {
+                    args->disasm_graphics = 1;
                 }
                 else if (strncmp(argv[i], "-", 1) == 0) {
                     arg_error(_disasm_usage, "unrecognized arguments: %s", argv[i]);
@@ -467,8 +473,10 @@ app_asm(FILE* source, FILE* output, const char* source_filename) {
 
 
 static int
-app_disasm(FILE* input, FILE* output, int code_bytes) {
-    int res = MtmcDisassemble(input, output, code_bytes);
+app_disasm(FILE* input, FILE* output, const char* input_filename,
+    int code_bytes, int graphics) {
+    int res = MtmcDisassemble(input, output, input_filename,
+        code_bytes, graphics);
     return res;
 }
 
@@ -540,7 +548,9 @@ int main(int argc, const char* argv[]) {
             res = args_open_file(args.output, "wb", &args.output_file);
             if (res != 0) { return res; }
             res = app_disasm(args.input_file, args.output_file,
-                args.disasm_code_bytes);
+                args.input,
+                args.disasm_code_bytes,
+                args.disasm_graphics);
             break;
 
         case AppMode_img:

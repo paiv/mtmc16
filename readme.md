@@ -36,13 +36,14 @@ positional arguments:
 
 Disassemble executables:
 ```
-usage: mtmc16 disasm [-h] [-b] [-o OUT] FILE
+usage: mtmc16 disasm [-h] [-b] [-g] [-o OUT] FILE
 
 positional arguments:
   FILE                  binary file
 
 options:
   -b, --bytes           print code bytes
+  -g, --graphics        extract graphics
 ```
 
 

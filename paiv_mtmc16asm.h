@@ -14,7 +14,8 @@ enum {
 
 
 int MtmcAssemble(FILE* source, FILE* output, const char* source_filename);
-int MtmcDisassemble(FILE* input, FILE* output, int code_bytes);
+int MtmcDisassemble(FILE* input, FILE* output, const char* input_filename,
+    int code_bytes, int graphics);
 
 
 #ifdef __cplusplus
@@ -1666,12 +1667,35 @@ int MtmcAssemble(FILE* source, FILE* output, const char* source_filename) {
 }
 
 
-int MtmcDisassemble(FILE* input, FILE* output, int code_bytes) {
+int MtmcDisassemble(FILE* input, FILE* output, const char* input_filename,
+    int code_bytes, int graphics) {
+    const char* name = "";
+    if (input_filename != NULL) {
+        char* sep = strrchr(input_filename, '/');
+        if (sep != NULL) {
+            name = sep + 1;
+        }
+    }
     struct MtmcExecutable exe;
     int res = MtmcExecutableLoad(input, &exe);
     if (res != 0) { return res; }
     res = MtmcDecompileExecutable(&exe, output, code_bytes);
     if (res != 0) { return res; }
+    if (graphics != 0) {
+        char filename[PATH_MAX];
+        for (size_t i = 0; i < exe.graphics_count; ++i) {
+            snprintf(filename, sizeof(filename), "%s_graphic%zu.png", name, i);
+            fprintf(stderr, "%s\n", filename);
+            FILE* file = fopen(filename, "wb");
+            if (file == NULL) {
+                perror("fopen");
+                return 1;
+            }
+            int res = MtmcGraphicWrite(&exe.graphics[i], file);
+            fclose(file);
+            if (res != 0) { return res; }
+        }
+    }
     return 0;
 }
 
